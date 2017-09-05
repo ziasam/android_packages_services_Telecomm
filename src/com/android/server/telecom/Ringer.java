@@ -21,6 +21,8 @@ import android.app.NotificationManager;
 import android.app.Person;
 import android.content.Context;
 import android.database.ContentObserver;
+import android.os.VibrationEffect;
+import android.provider.Settings;
 import android.telecom.Log;
 import android.telecom.TelecomManager;
 import android.media.AudioAttributes;
@@ -31,9 +33,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.UserHandle;
-import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.provider.Settings;
 
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.server.telecom.LogUtils.EventTimer;
@@ -495,6 +495,11 @@ public class Ringer {
 
         stopRinging();
 
+        if (Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.VIBRATE_ON_CALLWAITING, 1, UserHandle.USER_CURRENT) == 1) {
+            vibrate(200, 300, 500);
+        }
+
         if (mCallWaitingPlayer == null) {
             Log.addEvent(call, LogUtils.Events.START_CALL_WAITING_TONE, reason);
             mCallWaitingCall = call;
@@ -640,5 +645,12 @@ public class Ringer {
         public void onChange(boolean SelfChange) {
             updateVibrationPattern();
         }
+    }
+
+    public void vibrate(int v1, int p1, int v2) {
+        long[] pattern = new long[] {
+            0, v1, p1, v2
+        };
+        ((Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE)).vibrate(pattern, -1);
     }
 }
